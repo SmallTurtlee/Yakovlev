@@ -1,18 +1,25 @@
-from PyQt5.QtWidgets import     QApplication, QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem
+from PyQt5.QtWidgets import     QApplication, QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem, QPushButton
+from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import pyqtSlot
 import sys
 import openpyxl
 
 class Main(QWidget):
     def __init__(self):
         super(Main, self).__init__()
-        self.setWindowTitle("Load Excel")
+        self.setWindowTitle("Loading Excel")
 
         layout = QVBoxLayout()
         self.setLayout(layout)
-
+        self.button = QPushButton("Open file")
+        self.button.clicked.connect(self.on_click)
         self.table_widget = QTableWidget()
+        layout.addWidget(self.button)
         layout.addWidget(self.table_widget)
 
+        
+    @pyqtSlot()
+    def on_click(self):
         self.load_data()
 
     def load_data(self):
