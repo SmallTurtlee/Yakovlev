@@ -3,6 +3,7 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot
 import sys
 import openpyxl
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Main(QWidget):
     def __init__(self):
@@ -11,7 +12,7 @@ class Main(QWidget):
 
         layout = QVBoxLayout()
         self.setLayout(layout)
-        self.button = QPushButton("Open file")
+        self.button = QPushButton("Open new file")
         self.button.clicked.connect(self.on_click)
         self.table_widget = QTableWidget()
         layout.addWidget(self.button)
@@ -20,10 +21,11 @@ class Main(QWidget):
         
     @pyqtSlot()
     def on_click(self):
-        self.load_data()
+        name, done1 = QtWidgets.QInputDialog.getText(
+			self, 'Input Dialog', 'Введите название или путь к нужному файлу:') 
+        if done1: self.load_data(name)
 
-    def load_data(self):
-        path = "table.xlsx"
+    def load_data(self, path):
         workbook = openpyxl.load_workbook(path)
         sheet = workbook.active
 
