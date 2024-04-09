@@ -1,6 +1,6 @@
-from PyQt5.QtWidgets import     QApplication, QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem, QPushButton, QHBoxLayout, QCheckBox, QGroupBox, QScrollArea, QScrollBar
+from PyQt5.QtWidgets import     QApplication, QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem, QPushButton, QHBoxLayout, QCheckBox, QGroupBox, QScrollArea, QScrollBar, QSplitter
 from PyQt5.QtGui import QIcon
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import pyqtSlot, Qt
 import sys
 import openpyxl
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -21,30 +21,22 @@ class Main(QWidget):
         super(Main, self).__init__()
         self.setWindowTitle("Loading Excel")
         self.checkboxes=[]
-        self.number_of_grafics = 1
+        self.number_of_grafics = 0
         self.canvases = []
+        self.legend = []
         layout = QVBoxLayout() 
-        self.manygrafics = QVBoxLayout()
-        grafic = QHBoxLayout()
-        checkboxes1 = QGroupBox()
-        checkboxes1.setTitle("График №1")
-        checkboxes1.setFixedWidth(250)
+        self.manygrafics = QSplitter(Qt.Vertical)
         self.boxes = []
-        self.boxes.append(QVBoxLayout())
         self.checkboxes = []
-        self.checkboxes.append([])
         self.setLayout(layout)
-        self.canvases.append(MplCanvas(self, width=5, height=4, dpi=100))
-        toolbar = NavigationToolbar(self.canvases[0], self)
         self.table_widget = QTableWidget()
         layout.addLayout(self.button_block())   #
-        layout.addWidget(toolbar)               #
-        grafic.addWidget(self.canvases[0])
-        grafic.addWidget(checkboxes1)
-        checkboxes1.setLayout(self.boxes[0])
-        layout.addLayout(self.manygrafics)      #
-        self.manygrafics.addLayout(grafic)
-        layout.addWidget(self.table_widget)     #
+        layout.addWidget(self.manygrafics)      #
+        tablesplitter = QSplitter(Qt.Vertical)
+        tablesplitter.addWidget(self.manygrafics)
+        tablesplitter.addWidget(self.table_widget)
+        layout.addWidget(tablesplitter)     #
+        self.on_click3()
 
     def button_block(self):        #основные кнопки верхней панели
         block = QHBoxLayout()
@@ -101,7 +93,10 @@ class Main(QWidget):
         canv.addWidget(self.canvases[self.number_of_grafics-1])
         grafic.addLayout(canv)
         grafic.addWidget(checkboxes1)
-        self.manygrafics.addLayout(grafic)
+        graficgroup = QGroupBox()
+        graficgroup.setLayout(grafic)
+        self.manygrafics.addWidget(graficgroup)
+        
 
     def clear_canvases(self):
         for i in range(self.number_of_grafics):
