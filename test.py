@@ -4,11 +4,8 @@ from PyQt5.QtCore import pyqtSlot
 import sys
 import openpyxl
 from PyQt5 import QtCore, QtGui, QtWidgets
-import sys
 import matplotlib
 matplotlib.use('Qt5Agg')
-from PyQt5 import QtCore, QtWidgets
-
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
@@ -25,6 +22,7 @@ class Main(QWidget):
         self.setWindowTitle("Loading Excel")
         self.w1=[]
         self.number_of_grafics = 1
+        self.canvases = []
         layout = QVBoxLayout() 
         self.manygrafics = QVBoxLayout()
         grafic = QHBoxLayout()
@@ -33,12 +31,12 @@ class Main(QWidget):
         checkboxes1.setFixedWidth(250)
         self.boxes1 = QVBoxLayout()
         self.setLayout(layout)
-        self.sc1 = MplCanvas(self, width=5, height=4, dpi=100)
-        toolbar = NavigationToolbar(self.sc1, self)
+        self.canvases.append(MplCanvas(self, width=5, height=4, dpi=100))
+        toolbar = NavigationToolbar(self.canvases[0], self)
         self.table_widget = QTableWidget()
         layout.addLayout(self.button_block())   #
         layout.addWidget(toolbar)               #
-        grafic.addWidget(self.sc1)
+        grafic.addWidget(self.canvases[0])
         grafic.addWidget(checkboxes1)
         checkboxes1.setLayout(self.boxes1)
         layout.addLayout(self.manygrafics)      #
@@ -68,16 +66,17 @@ class Main(QWidget):
         if done1: 
             self.load_data(name)
             self.make_checkboxes()
+            self.clear_canvases()
             
     def on_click2(self):
-        self.sc1.axes.clear()
+        self.canvases[self.number_of_grafics-1].axes.clear()
         list_values = list(self.sheet.values)
         legend = list(list_values[0][1:])
         Main_sheet = list(reversed(list(zip(*list_values[1:]))))
         for i in range(len(legend)):
             if self.w1[i].isChecked():
-                self.sc1.axes.plot(Main_sheet[-1], Main_sheet[-1*(2+i)])
-        self.sc1.draw()  
+                self.canvases[self.number_of_grafics-1].axes.plot(Main_sheet[-1], Main_sheet[-1*(2+i)])
+        self.canvases[self.number_of_grafics-1].draw()  
 
     def on_click3(self):
         self.number_of_grafics += 1
@@ -85,12 +84,14 @@ class Main(QWidget):
         checkboxes1 = QGroupBox()
         checkboxes1.setTitle("График №"+str(self.number_of_grafics))
         checkboxes1.setFixedWidth(250)
-        self.sc1 = MplCanvas(self, width=5, height=4, dpi=100)
-        grafic.addWidget(self.sc1)
+        self.canvases.append(MplCanvas(self, width=5, height=4, dpi=100))
+        grafic.addWidget(self.canvases[self.number_of_grafics-1])
         grafic.addWidget(checkboxes1)
         self.manygrafics.addLayout(grafic)
 
-        
+    def clear_canvases(self):
+        for i in range(self.number_of_grafics):
+            self.canvases[i].axes.clear()
 
     def load_data(self, path):
         workbook = None
