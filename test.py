@@ -4,16 +4,15 @@ from PyQt5.QtCore import pyqtSlot
 import sys
 import openpyxl
 from PyQt5 import QtCore, QtGui, QtWidgets
+import sys
 import matplotlib
 matplotlib.use('Qt5Agg')
-
-from PyQt5 import QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
 
 class MplCanvas(FigureCanvasQTAgg):
-
     def __init__(self, parent=None, width=5, height=4, dpi=100):
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_subplot(111)
@@ -36,28 +35,31 @@ class Main(QWidget):
         self.sc1 = MplCanvas(self, width=5, height=4, dpi=100)
         toolbar = NavigationToolbar(self.sc1, self)
         self.table_widget = QTableWidget()
-        self.manygrafics.addWidget(toolbar)
+        layout.addLayout(self.button_block())   #
+        layout.addWidget(toolbar)               #
         grafic.addWidget(self.sc1)
         grafic.addWidget(checkboxes1)
         checkboxes1.setLayout(self.boxes1)
+        layout.addLayout(self.manygrafics)      #
         self.manygrafics.addLayout(grafic)
-        layout.addLayout(self.button_block())
-        layout.addLayout(self.manygrafics)
-        layout.addWidget(self.table_widget)
-        
-    def button_block(self):
+        layout.addWidget(self.table_widget)     #
+
+    def button_block(self):        #основные кнопки верхней панели
         block = QHBoxLayout()
         self.button1 = QPushButton("Открыть новый файл")
         self.button2 = QPushButton("Создать график")
         self.button3 = QPushButton("Добавить координаты")
+        #self.button4 = QPushButton("Удалить координаты")
         self.button1.clicked.connect(self.on_click)
         self.button2.clicked.connect(self.on_click2)
         self.button3.clicked.connect(self.on_click3)
+        #self.button4.clicked.connect(self.delete_graph)
         block.addWidget(self.button1)
         block.addWidget(self.button2)
         block.addWidget(self.button3)
+        #block.addWidget(self.button4)
         return block
-
+        
     @pyqtSlot()
     def on_click(self):
         name, done1 = QtWidgets.QInputDialog.getText(
@@ -86,6 +88,7 @@ class Main(QWidget):
         grafic.addWidget(self.sc1)
         grafic.addWidget(checkboxes1)
 
+        
 
     def load_data(self, path):
         workbook = None
@@ -114,7 +117,6 @@ class Main(QWidget):
         for i in range(len(legend)):
             self.w1.append(QCheckBox(legend[i], self))
             self.boxes1.addWidget(self.w1[i])
-
 
 
 app = QApplication(sys.argv)
