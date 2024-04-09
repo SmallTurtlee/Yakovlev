@@ -24,12 +24,13 @@ class Main(QWidget):
         super(Main, self).__init__()
         self.setWindowTitle("Loading Excel")
         self.w1=[]
+        self.number_of_grafics = 1
         layout = QVBoxLayout() 
         self.manygrafics = QVBoxLayout()
         grafic = QHBoxLayout()
         checkboxes1 = QGroupBox()
         checkboxes1.setTitle("График №1")
-        checkboxes1.setFixedSize(250, 500)
+        checkboxes1.setFixedWidth(250)
         self.boxes1 = QVBoxLayout()
         self.setLayout(layout)
         self.sc1 = MplCanvas(self, width=5, height=4, dpi=100)
@@ -79,14 +80,15 @@ class Main(QWidget):
         self.sc1.draw()  
 
     def on_click3(self):
+        self.number_of_grafics += 1
         grafic = QHBoxLayout()
         checkboxes1 = QGroupBox()
-        checkboxes1.setTitle("График №1")
+        checkboxes1.setTitle("График №"+str(self.number_of_grafics))
         checkboxes1.setFixedWidth(250)
-        self.manygrafics.addLayout(grafic)
         self.sc1 = MplCanvas(self, width=5, height=4, dpi=100)
         grafic.addWidget(self.sc1)
         grafic.addWidget(checkboxes1)
+        self.manygrafics.addLayout(grafic)
 
         
 
