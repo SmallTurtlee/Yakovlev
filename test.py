@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import     QApplication, QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem, QPushButton, QHBoxLayout, QCheckBox, QGroupBox, QScrollArea, QScrollBar, QSplitter
+from PyQt5.QtWidgets import     QApplication, QWidget, QVBoxLayout, QTableWidget, QTableWidgetItem, QPushButton, QHBoxLayout, QCheckBox, QGroupBox, QScrollArea, QScrollBar, QSplitter, QFrame
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import pyqtSlot, Qt
 import sys
@@ -24,10 +24,11 @@ class Main(QWidget):
         self.number_of_grafics = 0
         self.canvases = []
         self.legend = []
+        self.my_blocks = []
+        self.lay=[]
         layout = QVBoxLayout() 
         self.manygrafics = QSplitter(Qt.Vertical)
         self.boxes = []
-        self.checkboxes = []
         self.setLayout(layout)
         self.table_widget = QTableWidget()
         layout.addLayout(self.button_block())   #
@@ -43,15 +44,15 @@ class Main(QWidget):
         self.button1 = QPushButton("Открыть новый файл")
         self.button2 = QPushButton("Создать график")
         self.button3 = QPushButton("Добавить координаты")
-        #self.button4 = QPushButton("Удалить координаты")
+        self.button4 = QPushButton("Удалить координаты")
         self.button1.clicked.connect(self.on_click)
         self.button2.clicked.connect(self.on_click2)
         self.button3.clicked.connect(self.on_click3)
-        #self.button4.clicked.connect(self.delete_graph)
+        self.button4.clicked.connect(self.delete_click)
         block.addWidget(self.button1)
         block.addWidget(self.button2)
         block.addWidget(self.button3)
-        #block.addWidget(self.button4)
+        block.addWidget(self.button4)
         return block
         
     @pyqtSlot()
@@ -76,11 +77,16 @@ class Main(QWidget):
 
     def on_click3(self):
         self.number_of_grafics += 1
-        grafic = QHBoxLayout()
+        self.my_blocks.append(QGroupBox())
+        grafic = QSplitter(Qt.Horizontal)
+        self.lay.append(QHBoxLayout())
+        self.my_blocks[-1].setLayout(self.lay[-1])
+        self.lay[-1].addWidget(grafic)
+        canv1 = QGroupBox()
         canv = QVBoxLayout()
+        canv1.setLayout(canv)
         checkboxes1 = QGroupBox()
         checkboxes1.setTitle("График №"+str(self.number_of_grafics))
-        checkboxes1.setFixedWidth(250)
         self.boxes.append(QVBoxLayout())
         self.checkboxes.append([])
         for i in range(len(self.legend) - 1):
@@ -91,12 +97,24 @@ class Main(QWidget):
         toolbar = NavigationToolbar(self.canvases[self.number_of_grafics-1], self)
         canv.addWidget(toolbar)
         canv.addWidget(self.canvases[self.number_of_grafics-1])
-        grafic.addLayout(canv)
+        grafic.addWidget(canv1)
         grafic.addWidget(checkboxes1)
-        graficgroup = QGroupBox()
-        graficgroup.setLayout(grafic)
-        self.manygrafics.addWidget(graficgroup)
+        self.manygrafics.addWidget(self.my_blocks[-1])
         
+    def delete_click(self):
+        layout = self.lay[-1]
+        for i in reversed(range(layout.count())):
+            widgetToRemove = layout.itemAt(i).widget()
+            print(widgetToRemove)
+            layout.removeWidget(widgetToRemove)
+            widgetToRemove.setParent(None)
+        self.my_blocks[-1].setParent(None)
+        self.canvases = self.canvases[:-1]
+        self.checkboxes = self.checkboxes[:-1]
+        self.boxes = self.boxes[:-1]
+        self.lay = self.lay[:-1]
+        self.my_blocks = self.my_blocks[:-1]
+        self.number_of_grafics -=1
 
     def clear_canvases(self):
         for i in range(self.number_of_grafics):
