@@ -30,7 +30,6 @@ class Main(QWidget):
         self.legend = []
         self.my_blocks = []
         self.lay=[]
-        #self.cursors=[]
         layout = QVBoxLayout() 
         self.manygrafics = QSplitter(Qt.Vertical)
         self.boxes = []
@@ -75,15 +74,15 @@ class Main(QWidget):
     def on_click2(self):
         for i in self.canvases: i.axes.clear()
         self.cursors = []
-        list_values = list(self.sheet.values)
-        legend = list(list_values[0][1:])
-        Main_sheet = list(reversed(list(zip(*list_values[1:]))))
+        Main_sheet = list(reversed(list(zip(*self.list_values[1:]))))
         Axes = []
         for graph in range(self.number_of_grafics):
-            for i in range(len(legend)):
+            my_legend = []
+            for i in range(len(self.legend) - 1):
                 if self.checkboxes[graph][i].isChecked():
-                    self.canvases[graph].axes.plot(Main_sheet[-1], Main_sheet[-1*(2+i)], label = legend[i])
-            self.canvases[graph].add_legend(legend)
+                    self.canvases[graph].axes.plot(Main_sheet[-1], Main_sheet[-1*(2+i)], label = self.legend[i+1])
+                    my_legend.append(self.legend[i+1])
+            self.canvases[graph].add_legend(my_legend)
             Axes.append(self.canvases[graph].axes)
             self.canvases[graph].draw()
             self.canvases[graph].installEventFilter(self)
@@ -154,17 +153,17 @@ class Main(QWidget):
     def load_data(self, path):
         workbook = None
         workbook = openpyxl.load_workbook(path)
-        self.sheet = workbook.active
+        sheet = workbook.active
 
-        self.table_widget.setRowCount(self.sheet.max_row - 1)
-        self.table_widget.setColumnCount(self.sheet.max_column)
+        self.table_widget.setRowCount(sheet.max_row - 1)
+        self.table_widget.setColumnCount(sheet.max_column)
 
-        list_values = list(self.sheet.values)
-        self.legend = list(list_values[0])                                   #self.legeng - матрица со всеми названиями, включая ось х
+        self.list_values = list(sheet.values)
+        self.legend = list(self.list_values[0])                                   #self.legeng - матрица со всеми названиями, включая ось х
         self.table_widget.setHorizontalHeaderLabels(self.legend)
 
         row_index = 0
-        for value_tuple in list_values[1:]:
+        for value_tuple in self.list_values[1:]:
             column_index = 0
             for value in value_tuple:
                 self.table_widget.setItem(row_index, column_index,QTableWidgetItem(str(value)))
