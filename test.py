@@ -6,15 +6,19 @@ import openpyxl
 from PyQt5 import QtCore, QtGui, QtWidgets
 import matplotlib
 matplotlib.use('Qt5Agg')
+import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
+from matplotlib.widgets import MultiCursor, Cursor
+
 
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
-        fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = fig.add_subplot(111)
-        self.axes.set_xlabel("time")
-        super(MplCanvas, self).__init__(fig)
+        self.fig = Figure(figsize=(width, height), dpi=dpi)
+        self.axes = self.fig.add_subplot(111)
+        super(MplCanvas, self).__init__(self.fig)
+    def add_legend(self, legend_labels):
+        self.axes.legend(legend_labels)
 
 class Main(QWidget):
     def __init__(self):
@@ -26,6 +30,7 @@ class Main(QWidget):
         self.legend = []
         self.my_blocks = []
         self.lay=[]
+        #self.cursors=[]
         layout = QVBoxLayout() 
         self.manygrafics = QSplitter(Qt.Vertical)
         self.boxes = []
@@ -45,14 +50,17 @@ class Main(QWidget):
         self.button2 = QPushButton("Создать график")
         self.button3 = QPushButton("Добавить координаты")
         self.button4 = QPushButton("Удалить координаты")
+        self.button5 = QPushButton("Настройки курсора")
         self.button1.clicked.connect(self.on_click)
         self.button2.clicked.connect(self.on_click2)
         self.button3.clicked.connect(self.on_click3)
         self.button4.clicked.connect(self.delete_click)
+        self.button5.clicked.connect(self.cursor_settings)
         block.addWidget(self.button1)
         block.addWidget(self.button2)
         block.addWidget(self.button3)
         block.addWidget(self.button4)
+        block.addWidget(self.button5)
         return block
         
     @pyqtSlot()
@@ -66,14 +74,31 @@ class Main(QWidget):
             
     def on_click2(self):
         for i in self.canvases: i.axes.clear()
+        self.cursors = []
         list_values = list(self.sheet.values)
         legend = list(list_values[0][1:])
         Main_sheet = list(reversed(list(zip(*list_values[1:]))))
+        Axes = []
         for graph in range(self.number_of_grafics):
             for i in range(len(legend)):
                 if self.checkboxes[graph][i].isChecked():
-                    self.canvases[graph].axes.plot(Main_sheet[-1], Main_sheet[-1*(2+i)])
-            self.canvases[graph].draw()  
+                    self.canvases[graph].axes.plot(Main_sheet[-1], Main_sheet[-1*(2+i)], label = legend[i])
+            self.canvases[graph].add_legend(legend)
+            Axes.append(self.canvases[graph].axes)
+            self.canvases[graph].draw()
+            self.canvases[graph].installEventFilter(self)
+        self.Axes = tuple(Axes)
+        self.multi = MultiCursor(self.canvases[-1].fig, self.Axes, horizOn=False, vertOn=True, useblit=True, color='red') 
+        self.canvases[-1].draw()
+        
+    def eventFilter(self, obj, event):
+        if obj in self.canvases:
+            if event.type() == event.MouseButtonPress:
+                if event.button() == Qt.LeftButton:  # Левая кнопка мыши
+                    self.multi.visible = False  # Остановка курсора
+                elif event.button() == Qt.RightButton:  # Правая кнопка мыши
+                    self.multi.visible = True  # Возврат курсора в исходное состояние
+        return super().eventFilter(obj, event)        
 
     def on_click3(self):
         self.number_of_grafics += 1
@@ -105,7 +130,6 @@ class Main(QWidget):
         layout = self.lay[-1]
         for i in reversed(range(layout.count())):
             widgetToRemove = layout.itemAt(i).widget()
-            print(widgetToRemove)
             layout.removeWidget(widgetToRemove)
             widgetToRemove.setParent(None)
         self.my_blocks[-1].setParent(None)
@@ -114,7 +138,14 @@ class Main(QWidget):
         self.boxes = self.boxes[:-1]
         self.lay = self.lay[:-1]
         self.my_blocks = self.my_blocks[:-1]
+        self.Axes = self.Axes[:-1]
+        self.multi = MultiCursor(self.canvases[-1].fig, self.Axes, horizOn=False, vertOn=True, useblit=True, color='red')
         self.number_of_grafics -=1
+
+    def cursor_settings(self):
+        self.multi = MultiCursor(self.canvases[-1].fig, self.Axes, horizOn=False, vertOn=True, useblit=True, color='green')
+        for i in self.canvases: i.draw()
+        
 
     def clear_canvases(self):
         for i in range(self.number_of_grafics):
