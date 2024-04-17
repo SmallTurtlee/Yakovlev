@@ -9,8 +9,7 @@ matplotlib.use('Qt5Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
 from matplotlib.figure import Figure
-from matplotlib.widgets import MultiCursor, Cursor
-
+from matplotlib.widgets import MultiCursor, Cursor, TextBox
 
 class MplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
@@ -30,6 +29,7 @@ class Main(QWidget):
         self.legend = []
         self.my_blocks = []
         self.lay=[]
+        self.textt = []
         layout = QVBoxLayout() 
         self.manygrafics = QSplitter(Qt.Vertical)
         self.boxes = []
@@ -76,6 +76,7 @@ class Main(QWidget):
         self.cursors = []
         Main_sheet = list(reversed(list(zip(*self.list_values[1:]))))
         Axes = []
+        print(self.list_values)
         for graph in range(self.number_of_grafics):
             my_legend = []
             for i in range(len(self.legend) - 1):
@@ -94,9 +95,24 @@ class Main(QWidget):
         if obj in self.canvases:
             if event.type() == event.MouseButtonPress:
                 if event.button() == Qt.LeftButton:  # Левая кнопка мыши
+                    for i in range(len(self.canvases)): 
+                        for j in range(len(self.legend) - 1):
+                            if self.checkboxes[i][j].isChecked(): print()                  #Здесь должно находиться составление текста для надписи курсора
+                        #plt.text(0.5, 0.5, 'Center', transform = i.axes.transAxes)
+                        ymi = self.canvases[i].axes.get_ylim()[0] + (self.canvases[i].axes.get_ylim()[1] - self.canvases[i].axes.get_ylim()[0]) / 20
+                        yma = self.canvases[i].axes.get_ylim()[1] - (self.canvases[i].axes.get_ylim()[1] - self.canvases[i].axes.get_ylim()[0]) / 20
+                        self.canvases[i].axes.plot([self.xpos, self.xpos], [ymi, yma], color = 'darkblue')
+                        #i.axes.annotate('hi', xy=(self.xpos, self.ypos))
+                        self.textt.append(self.canvases[i].axes.text(self.xpos, (self.canvases[i].axes.get_ylim()[0] + self.canvases[i].axes.get_ylim()[1]) /2, self.my_text, va='center', ha='left'))
+                        self.canvases[i].draw()
                     self.multi.visible = False  # Остановка курсора
+                    ###
                 elif event.button() == Qt.RightButton:  # Правая кнопка мыши
                     self.multi.visible = True  # Возврат курсора в исходное состояние
+                    for i in range(self.number_of_grafics):
+                        self.textt[i].visible = False
+                        self.canvases[i].draw()
+                    
         return super().eventFilter(obj, event)        
 
     def on_click3(self):
@@ -114,16 +130,34 @@ class Main(QWidget):
         self.boxes.append(QVBoxLayout())
         self.checkboxes.append([])
         for i in range(len(self.legend) - 1):
-                self.checkboxes[-1].append(QCheckBox(self.legend[i+1], self))
+                c = QCheckBox(self.legend[i+1], self)
+                c.clicked.connect(self.on_click2)
+                self.checkboxes[-1].append(c)
                 self.boxes[-1].addWidget(self.checkboxes[-1][i])
         checkboxes1.setLayout(self.boxes[-1])
         self.canvases.append(MplCanvas(self, width=5, height=4, dpi=100))
+        #self.canvases[-1].mpl_connect("button_press_event", self.on_press)
+        #self.canvas.mpl_connect("button_release_event", self.on_release)
+        self.canvases[-1].mpl_connect("motion_notify_event", self.on_move)
         toolbar = NavigationToolbar(self.canvases[self.number_of_grafics-1], self)
         canv.addWidget(toolbar)
         canv.addWidget(self.canvases[self.number_of_grafics-1])
         grafic.addWidget(canv1)
         grafic.addWidget(checkboxes1)
         self.manygrafics.addWidget(self.my_blocks[-1])
+
+    def on_move(self, event):
+        self.xpos = event.xdata
+        self.ypos = event.ydata
+        if self.xpos != None and self.ypos != None: self.my_text = 'x: ' + str(round(self.xpos, 3)) + '\n y:' + str(round(self.ypos, 3))
+        else: self.my_text = ' '
+        #t.delete()
+        #t = self.canvases[-1].axes.text(self.xpos, self.ypos, self.text,
+        #    ha="left", va="top", rotation=0, size=15,
+        #    bbox=dict(boxstyle="square,pad=0.3",
+        #              fc="lightblue", ec="steelblue", lw=2))
+        #t.set_visible(False)
+        #self.canvases[-1].draw()    
         
     def delete_click(self):
         layout = self.lay[-1]
@@ -140,10 +174,12 @@ class Main(QWidget):
         self.Axes = self.Axes[:-1]
         self.multi = MultiCursor(self.canvases[-1].fig, self.Axes, horizOn=False, vertOn=True, useblit=True, color='red')
         self.number_of_grafics -=1
-
+        for i in self.canvases: i.draw()
+        
     def cursor_settings(self):
         self.multi = MultiCursor(self.canvases[-1].fig, self.Axes, horizOn=False, vertOn=True, useblit=True, color='green')
         for i in self.canvases: i.draw()
+        #print(self.canvases[-1].axes.get_xlim()[1], self.canvases[-1].axes.get_ylim()[1])
         
 
     def clear_canvases(self):
@@ -177,7 +213,9 @@ class Main(QWidget):
         for graph in range(self.number_of_grafics):
             self.checkboxes.append([])
             for i in range(len(self.legend) - 1):
-                self.checkboxes[graph].append(QCheckBox(self.legend[i+1], self))
+                c = QCheckBox(self.legend[i+1], self)
+                c.clicked.connect(self.on_click2)
+                self.checkboxes[graph].append(c)
                 self.boxes[graph].addWidget(self.checkboxes[graph][i])
 
 
