@@ -30,6 +30,7 @@ class Main(QWidget):
         self.my_blocks = []
         self.lay=[]
         self.textt = []
+        self.number_of_cursors = 0
         layout = QVBoxLayout() 
         self.manygrafics = QSplitter(Qt.Vertical)
         self.boxes = []
@@ -46,7 +47,7 @@ class Main(QWidget):
     def button_block(self):        #основные кнопки верхней панели
         block = QHBoxLayout()
         self.button1 = QPushButton("Открыть новый файл")
-        self.button2 = QPushButton("Создать график")
+        self.button2 = QPushButton("Обновить график")
         self.button3 = QPushButton("Добавить координаты")
         self.button4 = QPushButton("Удалить координаты")
         self.button5 = QPushButton("Настройки курсора")
@@ -59,7 +60,7 @@ class Main(QWidget):
         block.addWidget(self.button2)
         block.addWidget(self.button3)
         block.addWidget(self.button4)
-        block.addWidget(self.button5)
+        #block.addWidget(self.button5)
         return block
         
     @pyqtSlot()
@@ -74,14 +75,13 @@ class Main(QWidget):
     def on_click2(self):
         for i in self.canvases: i.axes.clear()
         self.cursors = []
-        Main_sheet = list(reversed(list(zip(*self.list_values[1:]))))
+        self.Main_sheet = list(reversed(list(zip(*self.list_values[1:]))))
         Axes = []
-        print(self.list_values)
         for graph in range(self.number_of_grafics):
             my_legend = []
             for i in range(len(self.legend) - 1):
                 if self.checkboxes[graph][i].isChecked():
-                    self.canvases[graph].axes.plot(Main_sheet[-1], Main_sheet[-1*(2+i)], label = self.legend[i+1])
+                    self.canvases[graph].axes.plot(self.Main_sheet[-1], self.Main_sheet[-1*(2+i)], label = self.legend[i+1])
                     my_legend.append(self.legend[i+1])
             self.canvases[graph].add_legend(my_legend)
             Axes.append(self.canvases[graph].axes)
@@ -95,23 +95,38 @@ class Main(QWidget):
         if obj in self.canvases:
             if event.type() == event.MouseButtonPress:
                 if event.button() == Qt.LeftButton:  # Левая кнопка мыши
-                    for i in range(len(self.canvases)): 
+                    self.number_of_cursors += 1
+                    delta = int(self.Main_sheet[-1][-1] )
+                    #print(delta)
+                    my_x = 0
+                    for i in self.Main_sheet[-1]:
+                        if abs(int(i) - self.xpos) < delta:
+                            delta = abs(int(i) - self.xpos)
+                            my_x = i
+                    num_of_x = list(self.Main_sheet[-1]).index(my_x)
+                    #self.xpos
+                    for i in range(len(self.canvases)):
+                        textt = "x: " + str(my_x) 
                         for j in range(len(self.legend) - 1):
-                            if self.checkboxes[i][j].isChecked(): print()                  #Здесь должно находиться составление текста для надписи курсора
+                            if self.checkboxes[i][j].isChecked():                   #Здесь должно находиться составление текста для надписи курсора
+                                #print(num_of_x)
+                                #print(self.legend)
+                                #print(self.Main_sheet)
+                                textt += "\n" + str(self.legend[j+1]) + ": " + str(list(self.Main_sheet[-1*(2+j)])[num_of_x])
                         #plt.text(0.5, 0.5, 'Center', transform = i.axes.transAxes)
                         ymi = self.canvases[i].axes.get_ylim()[0] + (self.canvases[i].axes.get_ylim()[1] - self.canvases[i].axes.get_ylim()[0]) / 20
                         yma = self.canvases[i].axes.get_ylim()[1] - (self.canvases[i].axes.get_ylim()[1] - self.canvases[i].axes.get_ylim()[0]) / 20
                         self.canvases[i].axes.plot([self.xpos, self.xpos], [ymi, yma], color = 'darkblue')
                         #i.axes.annotate('hi', xy=(self.xpos, self.ypos))
-                        self.textt.append(self.canvases[i].axes.text(self.xpos, (self.canvases[i].axes.get_ylim()[0] + self.canvases[i].axes.get_ylim()[1]) /2, self.my_text, va='center', ha='left'))
+                        self.textt.append(self.canvases[i].axes.text(self.xpos, (self.canvases[i].axes.get_ylim()[0] + self.canvases[i].axes.get_ylim()[1]) /2, textt, va='center', ha='left'))
                         self.canvases[i].draw()
                     self.multi.visible = False  # Остановка курсора
                     ###
                 elif event.button() == Qt.RightButton:  # Правая кнопка мыши
                     self.multi.visible = True  # Возврат курсора в исходное состояние
-                    for i in range(self.number_of_grafics):
-                        self.textt[i].visible = False
-                        self.canvases[i].draw()
+                    for i in self.textt:
+                        i.visible = False
+                    for i in self.canvases: i.draw()
                     
         return super().eventFilter(obj, event)        
 
@@ -138,12 +153,17 @@ class Main(QWidget):
         self.canvases.append(MplCanvas(self, width=5, height=4, dpi=100))
         #self.canvases[-1].mpl_connect("button_press_event", self.on_press)
         #self.canvas.mpl_connect("button_release_event", self.on_release)
+        scroll = QScrollArea()
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        scroll.setWidgetResizable(True)
+        scroll.setWidget(checkboxes1)
         self.canvases[-1].mpl_connect("motion_notify_event", self.on_move)
         toolbar = NavigationToolbar(self.canvases[self.number_of_grafics-1], self)
         canv.addWidget(toolbar)
         canv.addWidget(self.canvases[self.number_of_grafics-1])
         grafic.addWidget(canv1)
-        grafic.addWidget(checkboxes1)
+        grafic.addWidget(scroll)
         self.manygrafics.addWidget(self.my_blocks[-1])
 
     def on_move(self, event):
