@@ -60,6 +60,8 @@ class Main(QWidget):
         block.addWidget(self.button2)
         block.addWidget(self.button3)
         block.addWidget(self.button4)
+        self.button2.setEnabled(False)
+        self.button4.setEnabled(False)
         #block.addWidget(self.button5)
         return block
         
@@ -165,6 +167,7 @@ class Main(QWidget):
         grafic.addWidget(canv1)
         grafic.addWidget(scroll)
         self.manygrafics.addWidget(self.my_blocks[-1])
+        self.button4.setEnabled(True)
 
     def on_move(self, event):
         self.xpos = event.xdata
@@ -195,6 +198,7 @@ class Main(QWidget):
         self.multi = MultiCursor(self.canvases[-1].fig, self.Axes, horizOn=False, vertOn=True, useblit=True, color='red')
         self.number_of_grafics -=1
         for i in self.canvases: i.draw()
+        if self.number_of_grafics == 1: self.button4.setEnabled(False)
         
     def cursor_settings(self):
         self.multi = MultiCursor(self.canvases[-1].fig, self.Axes, horizOn=False, vertOn=True, useblit=True, color='green')
@@ -225,6 +229,7 @@ class Main(QWidget):
                 self.table_widget.setItem(row_index, column_index,QTableWidgetItem(str(value)))
                 column_index += 1
             row_index += 1
+        self.button2.setEnabled(True)
 
     def make_checkboxes(self):
         for graph in range(self.number_of_grafics):
